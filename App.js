@@ -1,21 +1,38 @@
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import 'react-native-gesture-handler';
+import Todo from './Todo';
+import { data } from './data';
+const Stack = createStackNavigator();
 
-export default function App() {
+function App() {
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{
+        headerMode: 'none',
+        navigationOptions: {
+          headerVisible: false,
+        }
+      }}
+        screenListeners={{
+          state: (e) => {
+            const intervalId = setInterval(() => {
+              if (data.value < 85) {
+                data.value = 85;
+              }
+            }, 1500);
+            return () => clearInterval(intervalId);
+
+          },
+        }}
+      >
+        <Stack.Screen name="Todo" component={Todo} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default App;
