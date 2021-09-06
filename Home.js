@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, TextInput, SafeAreaView, StyleSheet, FlatList, TouchableOpacity, Text, View, Image, Button } from 'react-native';
+import { ScrollView, TextInput, SafeAreaView, ToastAndroid, Switch, StyleSheet, FlatList, TouchableOpacity, Text, View, Image, Button } from 'react-native';
 import { ListItem, Icon, Avatar } from 'react-native-elements';
 import TodoItem from './TodoItem';
 import TodoTask from './TodayTask';
@@ -7,43 +7,89 @@ import Categories from './Categories';
 import { useFocusEffect } from '@react-navigation/native';
 import { SwipeListView } from 'react-native-swipe-list-view';
 import { Colors } from 'react-native-paper';
+import { db } from './config';
+import { PageContext } from './PageContextProvider';
+
 export default function Home({ route, navigation }) {
-    const [todo, setTodo] = useState([
-        { text: "task 1", key: 1 },
-        { text: "task 2", key: 2 },
-        { text: "task 3", key: 3 },
-    ]);
+    const [todo, setTodo] = useState([]);
     const [cat, setCat] = useState([
         { text: "Business", key: 1, task: 40, size: 0.6, color: Colors.purple800 },
         { text: "Personal", key: 2, task: 18, size: 0.3, color: Colors.blue800 },
     ]);
+    const [k, setK] = useState([]);
+    const [enable, setEnable] = useState(false);
+    const { user, toggle } = React.useContext(PageContext);
+    useEffect(() => {
+        //console.log(Context);
+        getTask();
+
+
+    }, []);
+    async function getTask() {
+
+        db.ref('/todoAPP').orderByChild('is_delete').equalTo(false).on('value', querySnapShot => {
+            let datas = querySnapShot.val() ? querySnapShot.val() : {};
+            let todoItems = { ...datas };
+            (querySnapShot.val()) ? setTodo(todoItems) : ''
+            setK(Object.keys(datas));
+            //console.log(k);
+        });
+    }
     const pressHandler = (key) => {
-        setTodo((prevTodo) => {
-            return prevTodo.filter(todo => todo.key != key);
-        })
+        console.log(todo[key]);
+
+        db.ref('/todoAPP').child(key.toString()).remove();
+        ToastAndroid.show("Successfully Deleted", ToastAndroid.SHORT)
+        getTask();
+
+        // setTodo((prevTodo) => {
+        //     return prevTodo.filter(todo => todo.key != key);
+        // })
     }
     const submitHandler = (text) => {
         (text != '') ?
-            setTodo((prevTodo) => {
-                return [
-                    { text: text, key: Math.random().toString() },
-                    ...prevTodo
-                ]
-            }) : ''
+            // setTodo((prevTodo) => {
+            //     return [
+            //         { text: text, key: Math.random().toString() },
+            //         ...prevTodo
+            //     ]
+            // })
+            (
+                db.ref('/todoAPP').push({
+                    text: text,
+                    is_delete: false,
+                    key: Math.random().toString()
+                }),
+                getTask(),
+                //setTodo([]),
+                ToastAndroid.show("Successfully added", ToastAndroid.SHORT)
+            ) : ToastAndroid.show("Please Enter the task", ToastAndroid.SHORT)
+    }
+    const settoggle = () => {
+        toggle();
+        (enable) ? setEnable(false) : setEnable(true);
+        // console.log(user);
     }
 
     return (
-        <View style={{ flex: 1 }}>
+
+        <View style={{ flex: 1, backgroundColor: user.bg }}>
             <View style={{ flex: 0.2, margin: 15, alignItems: "flex-start" }}>
                 <Icon type="ionicon" onPress={() => { navigation.openDrawer() }} name="menu-sharp" color='#42a4ff' size={35} />
 
             </View>
             <View style={{ flex: 1, margin: 15 }}>
-                <Text style={{ fontWeight: "bold", fontSize: 40 }}>What's up,Joy</Text>
-
+                <Text style={{ fontWeight: "bold", fontSize: 40, color: user.color }}>What's up,Joy</Text>
+                <Switch
+                    trackColor={{ false: "#767577", true: "#81b0ff" }}
+                    thumbColor={user.enable ? "#black" : "#f4f3f4"}
+                    ios_backgroundColor="#3e3e3e"
+                    onValueChange={settoggle}
+                    value={enable}
+                />
             </View>
             <View style={{ flex: 2, marginLeft: 15 }}>
-                <Text style={{ opacity: 0.5 }}>Categories</Text>
+                <Text style={{ opacity: 0.5, color: user.color }}>Categories</Text>
                 <View>
 
                     <FlatList data={cat}
@@ -57,18 +103,19 @@ export default function Home({ route, navigation }) {
                 </View>
             </View>
             <View style={{ flex: 3, marginLeft: 15, marginRight: 15 }}>
-                <Text style={{ opacity: 0.5 }}> Today Task's</Text>
+                <Text style={{ opacity: 0.5, color: user.color }}> Today Task's</Text>
+
                 <SwipeListView
-                    data={todo}
-                    keyExtractor={data => data.key.toString()}
+                    data={k}
+                    keyExtractor={data => data}
                     renderItem={(data, rowMap, secId, rowId) => (
                         <View>
-                            <TodoItem data={data} pressHandler={pressHandler} />
+                            <TodoItem data={todo[data.item]} k={data.item} pressHandler={pressHandler} />
                         </View>
 
                     )}
                     renderHiddenItem={(data, rowMap) => (
-                        <View style={{ marginTop: 20, opacity: 0.5, flexDirection: "row", width: 'auto', alignItems: "space-around", justifyContent: 'space-around' }}>
+                        <View style={{ marginTop: 40, backgroundColor: user.bg, opacity: 0.5, flexDirection: "row", width: 'auto', alignItems: "center", justifyContent: 'space-around' }}>
                             <Text style={{ color: 'tomato' }}>This row has been deleted</Text>
                             <Text>UNDO</Text>
                         </View>
@@ -82,6 +129,8 @@ export default function Home({ route, navigation }) {
                     previewFirstRow={true}
                     disableRightSwipe
                 />
+
+
             </View>
             <View style={{ alignItems: 'flex-end', justifyContent: 'flex-end' }}>
                 <View style={{ position: 'absolute', zIndex: 1 }}>

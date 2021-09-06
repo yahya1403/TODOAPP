@@ -132,6 +132,7 @@ export default function Todo({ navigation }) {
                 backgroundColor: '#231840',
             },
         }}>
+
             <Drawer.Screen name="Home" component={Home} options={{ headerShown: false }} />
             <Drawer.Screen name="Workout" component={Workout} options={{ headerShown: false }} />
             <Drawer.Screen name="TodayTask" component={TodayTask} options={{ headerShown: false }} />

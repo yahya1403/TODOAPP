@@ -6,33 +6,38 @@ import { createStackNavigator } from '@react-navigation/stack';
 import 'react-native-gesture-handler';
 import Todo from './Todo';
 import { data } from './data';
+import PageContextProvider from './PageContextProvider';
 const Stack = createStackNavigator();
+//const Context = React.createContext('light');
 
 function App() {
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{
-        headerMode: 'none',
-        navigationOptions: {
-          headerVisible: false,
-        }
-      }}
-        screenListeners={{
-          state: (e) => {
-            const intervalId = setInterval(() => {
-              if (data.value < 85) {
-                data.value = 85;
-              }
-            }, 1500);
-            return () => clearInterval(intervalId);
-
-          },
+    <PageContextProvider>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{
+          headerMode: 'none',
+          navigationOptions: {
+            headerVisible: false,
+          }
         }}
-      >
-        <Stack.Screen name="Todo" component={Todo} />
-      </Stack.Navigator>
-    </NavigationContainer>
+          screenListeners={{
+            state: (e) => {
+              const intervalId = setInterval(() => {
+                if (data.value < 85) {
+                  data.value = 85;
+                }
+              }, 1500);
+              return () => clearInterval(intervalId);
+
+            },
+          }}
+        >
+          <Stack.Screen name="Todo" component={Todo} />
+        </Stack.Navigator>
+      </NavigationContainer>
+
+    </PageContextProvider>
   );
 }
 export default App;
