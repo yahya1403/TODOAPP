@@ -9,8 +9,32 @@ import { SwipeListView } from 'react-native-swipe-list-view';
 import { Colors } from 'react-native-paper';
 import { db } from './config';
 import { PageContext } from './PageContextProvider';
-
+import * as Notifications from 'expo-notifications';
+import * as Permissions from 'expo-permissions';
+//import firebase from 'firebase';
+//import { Permissions } from 'expo';
 export default function Home({ route, navigation }) {
+    const registerForPushNotifications = async () => {
+        try {
+            const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
+            let finalstatus = status;
+            if (status !== 'granted') {
+                const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+                finalstatus = status;
+            }
+            if (status !== 'granted') { return; }
+            let token = await Notifications.getExpoPushTokenAsync();
+            //console.log(token);
+            //return token;
+            let uid = Math.random();
+            db.ref('/todos').push({
+                expotoken: token
+            })
+        } catch (error) {
+            console.log('Error getting a token', error);
+            //return error;
+        }
+    }
     const [todo, setTodo] = useState([]);
     const [cat, setCat] = useState([
         { text: "Business", key: 1, task: 40, size: 0.6, color: Colors.purple800 },
@@ -21,6 +45,7 @@ export default function Home({ route, navigation }) {
     const { user, toggle } = React.useContext(PageContext);
     useEffect(() => {
         //console.log(Context);
+        registerForPushNotifications().then(token => { console.log(token) }).catch(error => { console.log(error) });
         getTask();
 
 

@@ -7,6 +7,7 @@ import 'react-native-gesture-handler';
 import Todo from './Todo';
 import { data } from './data';
 import PageContextProvider from './PageContextProvider';
+
 const Stack = createStackNavigator();
 //const Context = React.createContext('light');
 
